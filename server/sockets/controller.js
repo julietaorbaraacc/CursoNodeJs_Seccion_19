@@ -27,6 +27,8 @@ const socketController = (socket, io) => {
 				const personas = usuarios.agregarPersona(client.id, data.nombre, data.sala);
 				//Emitimos a todos los usuarios de la sala la lista actualizada de usuarios
 				client.broadcast.to(data.sala).emit("listaPersonas", usuarios.getPersonasPorSala(data.sala));
+				//Emitimos un mensaje a todos los usuarios conectados a una sala en particular, avisando que el usuario se conectó
+				client.broadcast.to(data.sala).emit("crearMensaje", crearMensaje("Administrador", data.nombre + " se unió al chat"));
 				//En el callback pasamos las personas conectadas a la sala
 				callback(usuarios.getPersonasPorSala(data.sala));
 			}
@@ -47,13 +49,15 @@ const socketController = (socket, io) => {
 		});
 
 		//Escuchamos crearMensaje
-		client.on("crearMensaje", data => {
+		client.on("crearMensaje", (data, callback) => {
 			//Obtenemos la persona mediante el id
 			const persona = usuarios.getPersona(client.id);
 			//Creamos un mensaje nuevo, pasamos el nombre de la persona que lo envia y el mensaje
 			const mensaje = crearMensaje(persona.nombre, data.mensaje);
 			//Emitimos a todos los usuarios conectados a la sala de chat el mensaje enviado
 			client.broadcast.to(persona.sala).emit("crearMensaje", mensaje);
+			//Le paso el mensaje al callback
+			callback(mensaje);
 		});
 
 		//Escuchamos mensajePrivado

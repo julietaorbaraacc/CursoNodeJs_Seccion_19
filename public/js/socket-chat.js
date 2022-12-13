@@ -1,12 +1,5 @@
 //Creamos el socket del lado del cliente
 const socket = io();
-//Buscamos los parametros de la url
-const params = new URLSearchParams(window.location.search);
-//Creamos el objeto usuario en donde obtenemos de la url el nombre y la sala
-const usuario = {
-	nombre: params.get("nombre"),
-	sala: params.get("sala")
-};
 
 //Si nombre o la sala no vienen en la url, entonces redirecciona al index y tira un error
 if (!params.get("nombre") || !params.get("sala")) {
@@ -14,11 +7,12 @@ if (!params.get("nombre") || !params.get("sala")) {
 	throw new Error("El nombre y la sala son necesarios");
 }
 
-//Cuando el socket esta conectado, tiramos un mensaje en la consola y mostramos los usuarios conectados
+//Cuando el socket esta conectado, tiramos un mensaje en la consola y renderizamos en el html los usuarios conectados
 socket.on('connect', () => {
 	console.log('Conectado al servidor');
 	socket.emit("entrarChat", usuario, function (resp) {
-		console.log("Usuarios conectados: ", resp);
+		//console.log("Usuarios conectados: ", resp);
+		renderizarUsuarios(resp);
 	});
 });
 
@@ -27,22 +21,17 @@ socket.on('disconnect', () => {
 	console.log('Perdimos conexión con el servidor');
 });
 
-// Enviar información
-/* socket.emit('crearMensaje', {
-	mensaje: 'Hola Mundo'
-}, resp => {
-	console.log('respuesta server: ', resp);
-});
- */
-
-//Escuchamos crearMensaje, mostramos en la consola el mensaje enviado
+//Escuchamos crearMensaje y lo creamos en el html
 socket.on('crearMensaje', mensaje => {
-	console.log('Servidor:', mensaje);
+	//console.log('Servidor:', mensaje);
+	//Renderizamos el mensaje en el HTML y onemos en false porque no somos nosotros los que estamos enviando el mensaje, estamos renderizando los mensajes nuevos de los demas
+	renderizarMensajes(mensaje, false);
+	scrollBottom();
 });
 
 //Escuchamos listaPersonas, mostramos en la consola las personas conectadas
 socket.on("listaPersonas", personas => {
-	console.log(personas);
+	renderizarUsuarios(personas);
 })
 
 //Escuchamos mensajePrivado, mostramos los mensajes enviado solo al usuario que se lo enviamos
